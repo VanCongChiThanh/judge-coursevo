@@ -99,6 +99,7 @@ Authorization: Bearer YOUR_JWT_TOKEN (optional)
 
 ```json
 {
+  "user_id": {UUID},
   "language_id": 71,
   "source_code": "a = int(input())\nb = int(input())\nprint(a + b)",
   "problem_description": "Viết chương trình nhập 2 số nguyên và in ra tổng của chúng",
@@ -111,6 +112,7 @@ Authorization: Bearer YOUR_JWT_TOKEN (optional)
 
 ```json
 {
+  "user_id": {UUID},
   "language_id": 71,
   "source_code": "n = int(input())\nif n % 2 == 0:\n    print('Even')\nelse:\n    print('Odd')",
   "problem_description": "Viết chương trình kiểm tra một số có phải là số chẵn hay không. In 'Even' nếu chẵn, 'Odd' nếu lẻ.",
@@ -123,6 +125,7 @@ Authorization: Bearer YOUR_JWT_TOKEN (optional)
 
 ```json
 {
+  "user_id": {UUID},
   "language_id": 71,
   "source_code": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n-1)\n\nn = int(input())\nprint(factorial(n))",
   "problem_description": "Viết hàm tính giai thừa của một số nguyên n",
@@ -135,6 +138,7 @@ Authorization: Bearer YOUR_JWT_TOKEN (optional)
 
 ```json
 {
+  "user_id": {UUID},
   "language_id": 71,
   "source_code": "a = int(input())\nb = int(input())\nprint(a - b)",
   "problem_description": "Viết chương trình nhập 2 số nguyên và in ra tổng của chúng",
@@ -209,7 +213,6 @@ Các `language_id` phổ biến:
 
 ```json
 {
-  "user": null,
   "judge_result": {
     "stdout": "15\n",
     "time": "0.023",
@@ -221,12 +224,19 @@ Các `language_id` phổ biến:
     }
   },
   "feedback": {
-    "score": 10,
-    "comment": "Code chạy đúng và output khớp với expected output. Cách giải hợp lý.",
-    "suggestions": [
-      "Có thể thêm xử lý lỗi cho trường hợp input không hợp lệ",
-      "Nên thêm comment để code dễ hiểu hơn"
-    ]
+    "score": 100,
+    "summary": "Bài làm hoàn toàn chính xác và đáp ứng đầy đủ yêu cầu của đề bài. Code ngắn gọn, dễ hiểu và hoạt động tốt.",
+    "strengths": [
+      "Code hoạt động chính xác theo yêu cầu.",
+      "Code rất ngắn gọn và dễ đọc."
+    ],
+    "weaknesses": [],
+    "suggestions": [],
+    "code_quality": {
+      "readability": 100,
+      "efficiency": 100,
+      "best_practices": 100
+    }
   }
 }
 ```
