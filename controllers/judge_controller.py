@@ -28,6 +28,23 @@ def test_code(request: TestCodeRequest, authorization: str = Header(None)):
     return {
         "judge_result": result
     }
+    
+@router.post("/multi-test") # API chạy nhiều test case
+def multi_test_code(requests: list[dict], authorization: str = Header(None)):
+    """
+    API chạy nhiều test case (chỉ dùng Judge0)
+    """
+    # user = None
+    # if authorization:
+    #     try:
+    #         user = decode_jwt(authorization.replace("Bearer ", ""))
+    #     except Exception:
+    #         raise HTTPException(status_code=401, detail="Invalid token")
+
+    result = judge0_serivce.run_batch_code(requests)
+    return {
+        "judge_results": result
+    }
 
 
 @router.post("/submit")
