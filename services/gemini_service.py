@@ -4,7 +4,10 @@ import json
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-def get_feedback(source_code: str, problem_description: str, expected_output: str, judge_output: str):
+
+def get_feedback(
+    source_code: str, problem_description: str, expected_output: str, judge_output: str
+):
     prompt = f"""
     Bạn là một giáo viên lập trình chuyên nghiệp. Hãy đánh giá code của học sinh.
 
@@ -48,9 +51,9 @@ def get_feedback(source_code: str, problem_description: str, expected_output: st
     Chỉ trả về JSON thuần, không thêm markdown hay text khác.
     """
 
-    model = genai.GenerativeModel("gemini-2.0-flash-exp")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     response = model.generate_content(prompt)
-    
+
     # Parse response text thành JSON
     try:
         # Loại bỏ markdown code block nếu có
@@ -62,7 +65,7 @@ def get_feedback(source_code: str, problem_description: str, expected_output: st
         if text.endswith("```"):
             text = text[:-3]
         text = text.strip()
-        
+
         feedback_json = json.loads(text)
         return feedback_json
     except json.JSONDecodeError:
@@ -74,9 +77,5 @@ def get_feedback(source_code: str, problem_description: str, expected_output: st
             "strengths": [],
             "weaknesses": ["Không thể phân tích được feedback"],
             "suggestions": [],
-            "code_quality": {
-                "readability": 0,
-                "efficiency": 0,
-                "best_practices": 0
-            }
+            "code_quality": {"readability": 0, "efficiency": 0, "best_practices": 0},
         }

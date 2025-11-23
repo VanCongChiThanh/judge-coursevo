@@ -1,14 +1,16 @@
+import os
 from jose import jwt, JWTError
 import base64
 
-JWT_SECRET = "928d4aef-6452-4ca1-8e4e-7dabad510423"
-JWT_ALGORITHM = "HS512"
 
 def decode_jwt(token: str):
     try:
-        # Không encode thêm, truyền trực tiếp string
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        secret_string = os.getenv("JWT_SECRET")
+        algorithm = os.getenv("JWT_ALGORITHM", "HS512")
+        secret_bytes = base64.b64decode(secret_string)
+        payload = jwt.decode(token, secret_bytes, algorithms=[algorithm])
         return payload
+
     except JWTError as e:
-        print("JWT decode error:", e)
+        print(f"Lỗi xác thực: {e}")
         return None
