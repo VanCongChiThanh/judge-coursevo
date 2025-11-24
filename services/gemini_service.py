@@ -1,9 +1,15 @@
-import google.generativeai as genai
-from utils.config import GEMINI_API_KEY
+
+from google import genai
+
+import httpx
+from services.db_service import upsert_course_vector
+from utils.config import GEMINI_API_KEY, MAIN_SERVICE_URL
 import json
+import math
 
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
+BATCH_SIZE = 50
 
 def get_feedback(
     source_code: str, problem_description: str, expected_output: str, judge_output: str
@@ -51,31 +57,74 @@ def get_feedback(
     Chỉ trả về JSON thuần, không thêm markdown hay text khác.
     """
 
-    model = genai.GenerativeModel("gemini-2.5-flash")
-    response = model.generate_content(prompt)
+    # 📌 Gọi Gemini theo SDK mới
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
 
-    # Parse response text thành JSON
+    text = response.text.strip()
+
+    # 🧹 Làm sạch JSON nếu LLM tự bao block markdown
+    if text.startswith("```json"):
+        text = text[7:]
+    if text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    # 🧾 Parse JSON
     try:
-        # Loại bỏ markdown code block nếu có
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-
-        feedback_json = json.loads(text)
-        return feedback_json
-    except json.JSONDecodeError:
-        # Nếu Gemini không trả về JSON đúng format, wrap lại
+        return json.loads(text)
+    except Exception:
+        # Nếu JSON không đúng format, vẫn trả feedback dạng fallback
         return {
             "is_correct": None,
             "score": 0,
-            "summary": response.text,
+            "summary": text,
             "strengths": [],
-            "weaknesses": ["Không thể phân tích được feedback"],
+            "weaknesses": ["Không phân tích được feedback"],
             "suggestions": [],
             "code_quality": {"readability": 0, "efficiency": 0, "best_practices": 0},
         }
+
+async def process_courses():
+    async with httpx.AsyncClient() as http:
+        body = (await http.get(f"{MAIN_SERVICE_URL}/v1/courses")).json()
+        courses = body.get("data", [])
+
+    if not courses:
+        print("⚠ Không có khóa học nào.")
+        return
+
+    total = len(courses)
+    batches = math.ceil(total / BATCH_SIZE)
+    success = 0
+
+    for b in range(batches):
+        chunk = courses[b * BATCH_SIZE : (b + 1) * BATCH_SIZE]
+
+        contents = [
+            f"{c['title']}\n{c['description']}\n{c.get('learningObjectives', '')}"
+            for c in chunk
+        ]
+
+        try:
+            result = client.models.embed_content(
+                model="gemini-embedding-001",
+                contents=contents  # ✔ API chuẩn SDK mới
+            )
+
+            vectors = [emb.values for emb in result.embeddings]  # list[list[float]]
+
+            for idx, c in enumerate(chunk):
+                upsert_course_vector(c["courseId"], vectors[idx])
+                success += 1
+
+            print(f"🔹 Batch {b+1}/{batches} completed ({len(chunk)} courses)")
+
+        except Exception as e:
+            print(f"❌ Lỗi batch {b+1}/{batches}: {e}")
+
+    print(f"✨ Done — Embedded {success}/{total} courses bằng batch")

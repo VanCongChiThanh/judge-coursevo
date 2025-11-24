@@ -1,7 +1,8 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+import json
 
 from utils.config import DATABASE_URL
 
@@ -18,3 +19,18 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+def upsert_course_vector(course_id: str, embedding: list[float]):
+    db = SessionLocal()
+    sql = text("""
+        INSERT INTO course_vector (course_id, embedding, updated_at)
+        VALUES (:course_id, CAST(:embedding AS jsonb), NOW())
+        ON CONFLICT (course_id)
+        DO UPDATE SET embedding = CAST(:embedding AS jsonb), updated_at = NOW();
+    """)
+    db.execute(sql, {
+        "course_id": course_id,
+        "embedding": json.dumps(embedding)
+    })
+    db.commit()
+    db.close()

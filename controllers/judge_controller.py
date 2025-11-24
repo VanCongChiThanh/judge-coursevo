@@ -65,7 +65,6 @@ def submit_code(
     try:
         token = authorization.replace("Bearer ", "")
         user = decode_jwt(token)
-        print("Decoded user from JWT:", user)
 
         if user is None:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
@@ -98,9 +97,9 @@ def submit_code(
         }
 
         # 3️⃣ Lưu kết quả vào database
-        points = 0
-        if feedback and isinstance(feedback, dict) and "score" in feedback:
-            points = feedback["score"]
+    points = 0
+    if isinstance(feedback, dict) and "score" in feedback and isinstance(feedback["score"], (int, float)):
+        points = int(feedback["score"])
 
     new_submission = CodeSubmission(
         # user_id=user["sub"],

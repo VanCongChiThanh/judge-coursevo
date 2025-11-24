@@ -44,3 +44,9 @@ class CodeSubmission(Base):
     gemini_feedback = Column(JSON, nullable=True)
     points_achieved = Column(Integer, default=0)
     submitted_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+class CourseVector(Base):
+    __tablename__ = "course_vector"
+
+    course_id = Column(UUID(as_uuid=True), primary_key=True)
+    embedding = Column(JSON, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

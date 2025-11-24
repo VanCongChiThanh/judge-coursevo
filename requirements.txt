@@ -4,5 +4,5 @@ requests
 python-jose
 pydantic
 python-dotenv
-google-generativeai
+google-genai
 psycopg2-binary

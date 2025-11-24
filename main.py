@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from controllers.judge_controller import router as judge_router
+from controllers.embedding_controller import router as embedding_router
 from fastapi.middleware.cors import CORSMiddleware  
 app = FastAPI(title="Judge Couservo API", version="1.0.0")
 
@@ -24,6 +25,7 @@ app.add_middleware(
 
 
 app.include_router(judge_router, prefix="/api/judge", tags=["Judge"])
+app.include_router(embedding_router, prefix="/api/embedding", tags=["Embedding"])
 
 @app.get("/")
 def root():
