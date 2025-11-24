@@ -3,7 +3,7 @@ from models.judge_models import TestCodeRequest, SubmitCodeRequest
 from models.db_models import CodeSubmission, OAuthAccessToken
 from services import judge0_serivce, gemini_service
 from utils.jwt_utils import decode_jwt  # type: ignore
-from controllers.database import get_db
+from services.db_service import get_db
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -97,12 +97,10 @@ def submit_code(
             "message": "Code was judged successfully but AI feedback is temporarily unavailable",
         }
 
-    # 3️⃣ Lưu kết quả vào database
-    points = 0
-    # Giả sử nếu status là "Accepted" thì được điểm của test case
-    # Bạn cần logic phức tạp hơn để lấy điểm từ bảng code_test_cases
-    if judge_result.get("status", {}).get("description") == "Accepted":
-        points = 10  # Điểm ví dụ
+        # 3️⃣ Lưu kết quả vào database
+        points = 0
+        if feedback and isinstance(feedback, dict) and "score" in feedback:
+            points = feedback["score"]
 
     new_submission = CodeSubmission(
         # user_id=user["sub"],

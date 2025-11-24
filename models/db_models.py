@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKe
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
-from controllers.database import Base
-
+from services.db_service import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -27,7 +27,7 @@ class OAuthAccessToken(Base):
 class CodeSubmission(Base):
     __tablename__ = "code_submissions"
 
-    submission_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    code_submission_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     exercise_id = Column(
         UUID(as_uuid=True),
@@ -43,4 +43,4 @@ class CodeSubmission(Base):
     stderr = Column(Text, nullable=True)
     gemini_feedback = Column(JSON, nullable=True)
     points_achieved = Column(Integer, default=0)
-    submitted_at = Column(DateTime, nullable=False, server_default=func.now())
+    submitted_at = Column(DateTime, nullable=False, default=datetime.utcnow)
