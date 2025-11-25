@@ -6,6 +6,9 @@ from services.db_service import upsert_course_vector
 from utils.config import GEMINI_API_KEY, MAIN_SERVICE_URL
 import json
 import math
+from services.db_service import get_all_course_vectors
+import numpy as np
+
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -128,3 +131,85 @@ async def process_courses():
             print(f"❌ Lỗi batch {b+1}/{batches}: {e}")
 
     print(f"✨ Done — Embedded {success}/{total} courses bằng batch")
+
+async def generate_career_plan(req):
+    # 1️⃣ tạo context mô tả toàn bộ yêu cầu career
+    context = f"""
+    Role: {req.role}
+    Goal: {req.goal}
+    Answers: {req.answers}
+    """
+
+    # 2️⃣ yêu cầu Gemini chia lộ trình thành các section
+    prompt = f"""
+    Bạn là cố vấn nghề nghiệp trong lĩnh vực lập trình.
+    Hãy tạo một lộ trình học (career roadmap) dựa trên các thông tin sau:
+
+    {context}
+
+    Yêu cầu bắt buộc:
+    - TRẢ VỀ JSON THUẦN, không thêm giải thích, không markdown.
+    - Không viết bất kỳ nội dung nào ngoài JSON.
+    - Từ ngữ ngắn gọn, chính xác, chuyên nghiệp.
+
+    Cấu trúc JSON bắt buộc:
+    {{
+    "sections": [
+        {{
+        "section_title": "Tên section",
+        "description": "Mô tả nội dung section và kỹ năng sẽ đạt được",
+        "keywords": ["keyword1", "keyword2", "keyword3"]
+        }}
+    ]
+    }}
+
+    Quy tắc sinh dữ liệu:
+    - Tạo từ 3 đến 6 section.
+    - Một section phải tập trung vào một chủ đề kỹ năng rõ ràng (ví dụ: Java cơ bản, Spring Boot backend, Hệ thống phân tán, DevOps,...)
+    - Mỗi section phải có tối thiểu 2 và tối đa 4 keywords.
+    - KHÔNG thêm text ngoài JSON.
+    """
+
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    text = response.text.strip()
+    if text.startswith("```json"): text = text[7:]
+    if text.startswith("```"): text = text[3:]
+    if text.endswith("```"): text = text[:-3]
+    sections = json.loads(text)["sections"]
+
+    # 3️⃣ Chuyển keywords thành courseIds — dùng embedding search
+    enriched_sections = []
+    for section in sections:
+        course_ids = await search_similar_courses(section["keywords"])
+        enriched_sections.append({
+            "section_title": section["section_title"],
+            "description": section["description"],
+            "course_ids": course_ids
+        })
+
+    return {
+        "role": req.role,
+        "goal": req.goal,
+        "sections": enriched_sections
+    }
+async def search_similar_courses(keywords: list[str], top_k: int = 5):
+    # Tạo embedding query bằng Gemini
+    query = " ".join(keywords)
+    emb = client.models.embed_content(model="gemini-embedding-001", contents=[query]).embeddings[0].values
+
+    courses = get_all_course_vectors()  # [{ course_id, embedding }]
+    scores = []
+
+    for c in courses:
+        score = np.dot(emb, c["embedding"]) / (
+            np.linalg.norm(emb) * np.linalg.norm(c["embedding"])
+        )
+        scores.append((c["course_id"], score))
+
+    scores.sort(key=lambda x: x[1], reverse=True)
+    return [cid for cid, _ in scores[:top_k]]

@@ -34,3 +34,14 @@ def upsert_course_vector(course_id: str, embedding: list[float]):
     })
     db.commit()
     db.close()
+    
+def get_all_course_vectors():
+    db = SessionLocal()
+    sql = text("""
+        SELECT course_id, embedding FROM course_vector;
+    """)
+    result = db.execute(sql).fetchall()
+    db.close()
+    if result:
+        return [{"course_id": row[0], "embedding": row[1]} for row in result]
+    return None
