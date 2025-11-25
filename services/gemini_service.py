@@ -109,7 +109,12 @@ async def process_courses():
         chunk = courses[b * BATCH_SIZE : (b + 1) * BATCH_SIZE]
 
         contents = [
-            f"{c['title']}\n{c['description']}\n{c.get('learningObjectives', '')}"
+            f"""
+            {c['title']}
+            {c['description']}
+            Level: {c['level']}
+            Category: {c['category']}
+            """
             for c in chunk
         ]
 
