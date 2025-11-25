@@ -202,7 +202,7 @@ async def generate_career_plan(req):
         "goal": req.goal,
         "sections": enriched_sections
     }
-async def search_similar_courses(keywords: list[str], top_k: int = 5):
+async def search_similar_courses(keywords: list[str], top_k: int = 3):
     # Tạo embedding query bằng Gemini
     query = " ".join(keywords)
     emb = client.models.embed_content(model="gemini-embedding-001", contents=[query]).embeddings[0].values
