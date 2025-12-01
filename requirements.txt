@@ -7,3 +7,4 @@ python-dotenv
 google-genai
 psycopg2-binary
 numpy
+sqlalchemy
