@@ -44,4 +44,4 @@ def get_all_course_vectors():
     db.close()
     if result:
         return [{"course_id": row[0], "embedding": row[1]} for row in result]
-    return None
+    return []

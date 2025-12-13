@@ -208,6 +208,9 @@ async def search_similar_courses(keywords: list[str], top_k: int = 3):
     emb = client.models.embed_content(model="gemini-embedding-001", contents=[query]).embeddings[0].values
 
     courses = get_all_course_vectors()  # [{ course_id, embedding }]
+    if not courses:
+        return []
+    
     scores = []
 
     for c in courses:
