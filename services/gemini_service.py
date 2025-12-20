@@ -62,7 +62,7 @@ def get_feedback(
 
     # 📌 Gọi Gemini theo SDK mới
     response = client.models.generate_content(
-        model="gemini-3-pro-preview",
+        model="gemini-2.5-flash",
         contents=prompt
     )
 
